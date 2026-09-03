@@ -432,7 +432,8 @@ emi-vault/
         ├── hooks/                  # document.title helper
         ├── lib/                    # formatting + error helpers
         ├── pages/                  # listing + detail pages
-        └── types/                  # shared TypeScript types
+        ├── types/                  # shared TypeScript types
+        └── public/images/          # variant chassis photos (served as /images/...)
 ```
 
 ## Scripts
@@ -554,18 +555,12 @@ Render listens on `process.env.PORT` and binds `0.0.0.0`. Hosted `DATABASE_URL` 
 7. Go back to Render → Environment → set `FRONTEND_ORIGIN` to that Vercel URL → **Manual Deploy** → Deploy latest commit (so CORS allows the frontend).
 8. If you change `VITE_API_URL` later, redeploy the Vercel project so the new value is baked into the JS bundle.
 
-`frontend/vercel.json` rewrites all routes to `index.html` so `/products/:slug` works on refresh.
+`frontend/vercel.json` rewrites SPA routes to `index.html` so `/products/:slug` works on refresh. Product photos in `frontend/public/images/` are copied into `dist/images/` at build time and served as static files.
 
 ### After both are live
 
 1. Open the Vercel URL.
 2. Confirm the product grid loads from the Render API.
 3. Open a product, select a variant and EMI plan, click Proceed.
+4. Confirm chassis photos load from `/images/...` (same origin as the Vercel app).
 
-**Frontend** (`frontend/`)
-
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Vite dev server on port 5173 |
-| `npm run build` | Production build to `frontend/dist/` |
-| `npm run preview` | Preview the production build |
