@@ -11,28 +11,6 @@ import { getApiErrorKind, type ApiErrorKind } from '../lib/errors'
 import { formatInr, unique } from '../lib/format'
 import type { ProductDetail, ProductVariant } from '../types/product'
 
-function findByStorage(
-  variants: ProductVariant[],
-  storage: string,
-  color: string,
-): ProductVariant | undefined {
-  return (
-    variants.find((variant) => variant.storage === storage && variant.color === color) ??
-    variants.find((variant) => variant.storage === storage)
-  )
-}
-
-function findByColor(
-  variants: ProductVariant[],
-  storage: string,
-  color: string,
-): ProductVariant | undefined {
-  return (
-    variants.find((variant) => variant.storage === storage && variant.color === color) ??
-    variants.find((variant) => variant.color === color)
-  )
-}
-
 function titleForState(
   slug: string | undefined,
   loading: boolean,
@@ -51,6 +29,8 @@ export function ProductDetailPage() {
   const { slug } = useParams()
   const [product, setProduct] = useState<ProductDetail | null>(null)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
+  const [selectedStorage, setSelectedStorage] = useState<string | null>(null)
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -65,11 +45,16 @@ export function ProductDetailPage() {
     try {
       const data = await fetchProductBySlug(productSlug)
       setProduct(data)
-      setSelectedVariant(data.variants[0] ?? null)
+      const first = data.variants[0] ?? null
+      setSelectedVariant(first)
+      setSelectedStorage(first?.storage ?? null)
+      setSelectedColor(first?.color ?? null)
       setSelectedPlanId(null)
     } catch (error) {
       setProduct(null)
       setSelectedVariant(null)
+      setSelectedStorage(null)
+      setSelectedColor(null)
       setErrorKind(getApiErrorKind(error))
     } finally {
       setLoading(false)
@@ -87,13 +72,18 @@ export function ProductDetailPage() {
         const data = await fetchProductBySlug(productSlug)
         if (cancelled) return
         setProduct(data)
-        setSelectedVariant(data.variants[0] ?? null)
+        const first = data.variants[0] ?? null
+        setSelectedVariant(first)
+        setSelectedStorage(first?.storage ?? null)
+        setSelectedColor(first?.color ?? null)
         setSelectedPlanId(null)
         setErrorKind(null)
       } catch (error) {
         if (cancelled) return
         setProduct(null)
         setSelectedVariant(null)
+        setSelectedStorage(null)
+        setSelectedColor(null)
         setErrorKind(getApiErrorKind(error))
       } finally {
         if (!cancelled) setLoading(false)
@@ -121,26 +111,36 @@ export function ProductDetailPage() {
   const networkError = errorKind === 'network'
 
   function selectByStorage(storage: string) {
-    if (!product || !selectedVariant) return
-    const next = findByStorage(product.variants, storage, selectedVariant.color)
+    if (!product) return
+    const color = selectedColor ?? selectedVariant?.color
+    const next =
+      product.variants.find((item) => item.storage === storage && item.color === color) ??
+      product.variants.find((item) => item.storage === storage)
     if (!next) return
+    setSelectedStorage(storage)
+    setSelectedColor(next.color)
     setSelectedVariant(next)
     setSelectedPlanId(null)
   }
 
   function selectByColor(color: string) {
-    if (!product || !selectedVariant) return
-    const next = findByColor(product.variants, selectedVariant.storage, color)
+    if (!product) return
+    const storage = selectedStorage ?? selectedVariant?.storage
+    const next =
+      product.variants.find((item) => item.storage === storage && item.color === color) ??
+      product.variants.find((item) => item.color === color)
     if (!next) return
+    setSelectedColor(color)
+    setSelectedStorage(next.storage)
     setSelectedVariant(next)
     setSelectedPlanId(null)
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex max-w-6xl flex-col px-4 pb-28 pt-6 sm:px-6 lg:h-svh lg:overflow-hidden lg:px-8">
       <Link
         to="/"
-        className="text-sm font-medium text-indigo-800 underline-offset-2 hover:underline"
+        className="shrink-0 text-sm font-medium text-indigo-800 underline-offset-2 hover:underline"
       >
         Back to products
       </Link>
@@ -164,15 +164,15 @@ export function ProductDetailPage() {
       )}
 
       {!pageLoading && !errorKind && product && selectedVariant && (
-        <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <section>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="mt-6 grid min-h-0 flex-1 grid-cols-1 gap-8 lg:grid-cols-2 lg:overflow-hidden">
+          <section className="relative isolate z-0 overflow-hidden bg-slate-50 lg:overflow-y-auto">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-neutral-100">
               <img
                 src={selectedVariant.imageUrl}
                 alt={`${product.name}, ${selectedVariant.variantLabel}`}
                 width={800}
                 height={600}
-                className="aspect-[4/3] w-full object-cover"
+                className="aspect-square w-full object-contain object-center"
               />
             </div>
             <p className="mt-4 text-sm font-medium uppercase tracking-wide text-slate-700">
@@ -185,16 +185,16 @@ export function ProductDetailPage() {
               <VariantSelector
                 storages={storages}
                 colors={colors}
-                selectedStorage={selectedVariant.storage}
-                selectedColor={selectedVariant.color}
+                selectedStorage={selectedStorage ?? selectedVariant.storage}
+                selectedColor={selectedColor ?? selectedVariant.color}
                 onStorageChange={selectByStorage}
                 onColorChange={selectByColor}
               />
             </div>
           </section>
 
-          <section className="flex min-h-0 flex-col">
-            <div>
+          <section className="relative isolate z-0 flex min-h-0 flex-col overflow-hidden bg-slate-50">
+            <div className="shrink-0 bg-slate-50 pb-4">
               <p className="text-sm text-slate-700">
                 <span className="mr-2 line-through">{formatInr(selectedVariant.mrp)}</span>
                 MRP
@@ -202,15 +202,14 @@ export function ProductDetailPage() {
               <p className="mt-1 text-3xl font-bold text-slate-900">
                 {formatInr(selectedVariant.price)}
               </p>
+              <h2 className="mt-8 text-lg font-semibold text-slate-900">
+                EMI plans backed by mutual funds
+              </h2>
             </div>
-
-            <h2 className="mt-8 text-lg font-semibold text-slate-900">
-              EMI plans backed by mutual funds
-            </h2>
             <div
               role="radiogroup"
               aria-label="EMI plans"
-              className="mt-4 max-h-[28rem] space-y-3 overflow-y-auto pr-1"
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50 pr-1"
             >
               {selectedVariant.emiPlans.map((plan) => (
                 <EmiPlanCard
@@ -230,7 +229,7 @@ export function ProductDetailPage() {
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
             <p className="hidden text-sm text-slate-700 sm:block">
               {selectedPlan
-                ? `${formatInr(selectedPlan.monthlyAmount)} × ${selectedPlan.tenureMonths} months`
+                ? `${formatInr(selectedPlan.monthlyAmount)} x ${selectedPlan.tenureMonths} months`
                 : 'Select an EMI plan to continue'}
             </p>
             <button

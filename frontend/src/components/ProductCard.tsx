@@ -18,7 +18,7 @@ export function ProductCard({ product }: ProductCardProps) {
       aria-label={`${product.name}, ${variantLabel}, starting at ${formatInr(product.startingPrice)}`}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
     >
-      <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+      <div className="aspect-[4/3] shrink-0 overflow-hidden bg-slate-100">
         {product.image ? (
           <img
             src={product.image}
@@ -27,7 +27,7 @@ export function ProductCard({ product }: ProductCardProps) {
             height={600}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain object-center"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-slate-500">

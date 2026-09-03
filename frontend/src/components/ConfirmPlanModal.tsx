@@ -74,7 +74,7 @@ export function ConfirmPlanModal({
           <div className="flex justify-between gap-4">
             <dt className="text-slate-700">EMI</dt>
             <dd className="text-right font-medium text-slate-900">
-              {formatInr(plan.monthlyAmount)} × {plan.tenureMonths} months
+            {formatInr(plan.monthlyAmount)} x {plan.tenureMonths} months
             </dd>
           </div>
           <div className="flex justify-between gap-4">

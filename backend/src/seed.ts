@@ -35,6 +35,96 @@ type SeedProduct = {
   variants: SeedVariant[];
 };
 
+function money(value: number): string {
+  return value.toFixed(2);
+}
+
+function emiPlansFor(price: number): SeedEmiPlan[] {
+  const cashback = (share: number) => money(Math.round(price * share));
+  const interestEmi = (annualRate: number, months: number) => {
+    const monthlyRate = annualRate / 100 / 12;
+    const amount =
+      (price * monthlyRate * (1 + monthlyRate) ** months) /
+      ((1 + monthlyRate) ** months - 1);
+    return money(amount);
+  };
+
+  return [
+    {
+      monthlyAmount: money(price / 3),
+      tenureMonths: 3,
+      interestRate: '0.00',
+      planLabel: '3-month zero interest',
+    },
+    {
+      monthlyAmount: money(price / 6),
+      tenureMonths: 6,
+      interestRate: '0.00',
+      cashbackAmount: cashback(0.015),
+      planLabel: '6-month zero interest + cashback',
+    },
+    {
+      monthlyAmount: interestEmi(8.5, 12),
+      tenureMonths: 12,
+      interestRate: '8.50',
+      planLabel: '12-month standard EMI',
+    },
+    {
+      monthlyAmount: money(price / 12),
+      tenureMonths: 12,
+      interestRate: '0.00',
+      cashbackAmount: cashback(0.01),
+      planLabel: '12-month zero interest promo',
+    },
+    {
+      monthlyAmount: interestEmi(12, 24),
+      tenureMonths: 24,
+      interestRate: '12.00',
+      planLabel: '24-month balanced EMI',
+    },
+    {
+      monthlyAmount: interestEmi(14, 36),
+      tenureMonths: 36,
+      interestRate: '14.00',
+      planLabel: '36-month extended EMI',
+    },
+    {
+      monthlyAmount: money(price / 36),
+      tenureMonths: 36,
+      interestRate: '0.00',
+      cashbackAmount: cashback(0.02),
+      planLabel: '36-month mutual fund backed plan',
+    },
+  ];
+}
+
+function variant(
+  storage: string,
+  color: string,
+  mrp: number,
+  price: number,
+  imageUrl: string,
+  stock: number,
+): SeedVariant {
+  return {
+    variantLabel: `${storage} ${color}`,
+    color,
+    storage,
+    mrp: money(mrp),
+    price: money(price),
+    imageUrl,
+    availableStock: stock,
+    emiPlans: emiPlansFor(price),
+  };
+}
+
+const IPHONE_NATURAL = '/images/iphone-natural-titanium.png';
+const IPHONE_BLUE = '/images/iphone-blue-titanium.png';
+const SAMSUNG_GRAY = '/images/samsung-s24-titanium-gray.png';
+const SAMSUNG_BLACK = '/images/samsung-s24-titanium-black.png';
+const ONEPLUS_MIDNIGHT = '/images/oneplus-13-midnight-ocean.png';
+const ONEPLUS_ARCTIC = '/images/oneplus-13-arctic-dawn.png';
+
 const seedProducts: SeedProduct[] = [
   {
     slug: 'iphone-17-pro',
@@ -43,120 +133,10 @@ const seedProducts: SeedProduct[] = [
     description:
       'Titanium design with the A19 Pro chip, ProMotion display, and an advanced triple-camera system built for low-light photography.',
     variants: [
-      {
-        variantLabel: '256GB Natural Titanium',
-        color: 'Natural Titanium',
-        storage: '256GB',
-        mrp: '149900.00',
-        price: '144900.00',
-        imageUrl:
-          'https://images.unsplash.com/photo-1695048133142-1c204c0c0a0e?w=800&auto=format&fit=crop',
-        availableStock: 42,
-        emiPlans: [
-          {
-            monthlyAmount: '48300.00',
-            tenureMonths: 3,
-            interestRate: '0.00',
-            planLabel: '3-month zero interest',
-          },
-          {
-            monthlyAmount: '24150.00',
-            tenureMonths: 6,
-            interestRate: '0.00',
-            cashbackAmount: '2500.00',
-            planLabel: '6-month zero interest + cashback',
-          },
-          {
-            monthlyAmount: '12890.00',
-            tenureMonths: 12,
-            interestRate: '8.50',
-            planLabel: '12-month standard EMI',
-          },
-          {
-            monthlyAmount: '12075.00',
-            tenureMonths: 12,
-            interestRate: '0.00',
-            cashbackAmount: '1500.00',
-            planLabel: '12-month zero interest promo',
-          },
-          {
-            monthlyAmount: '6890.00',
-            tenureMonths: 24,
-            interestRate: '12.00',
-            planLabel: '24-month balanced EMI',
-          },
-          {
-            monthlyAmount: '5120.00',
-            tenureMonths: 36,
-            interestRate: '14.00',
-            planLabel: '36-month extended EMI',
-          },
-          {
-            monthlyAmount: '4025.00',
-            tenureMonths: 36,
-            interestRate: '0.00',
-            cashbackAmount: '3000.00',
-            planLabel: '36-month mutual fund backed plan',
-          },
-        ],
-      },
-      {
-        variantLabel: '512GB Blue Titanium',
-        color: 'Blue Titanium',
-        storage: '512GB',
-        mrp: '169900.00',
-        price: '164900.00',
-        imageUrl:
-          'https://images.unsplash.com/photo-1720360207555-c4c5c4c4c4c4?w=800&auto=format&fit=crop',
-        availableStock: 28,
-        emiPlans: [
-          {
-            monthlyAmount: '54967.00',
-            tenureMonths: 3,
-            interestRate: '0.00',
-            planLabel: '3-month zero interest',
-          },
-          {
-            monthlyAmount: '27484.00',
-            tenureMonths: 6,
-            interestRate: '0.00',
-            cashbackAmount: '3000.00',
-            planLabel: '6-month zero interest + cashback',
-          },
-          {
-            monthlyAmount: '14670.00',
-            tenureMonths: 12,
-            interestRate: '8.50',
-            planLabel: '12-month standard EMI',
-          },
-          {
-            monthlyAmount: '13742.00',
-            tenureMonths: 12,
-            interestRate: '0.00',
-            cashbackAmount: '2000.00',
-            planLabel: '12-month zero interest promo',
-          },
-          {
-            monthlyAmount: '7850.00',
-            tenureMonths: 24,
-            interestRate: '12.00',
-            planLabel: '24-month balanced EMI',
-          },
-          {
-            monthlyAmount: '5830.00',
-            tenureMonths: 36,
-            interestRate: '14.00',
-            planLabel: '36-month extended EMI',
-          },
-          {
-            monthlyAmount: '4581.00',
-            tenureMonths: 36,
-            interestRate: '0.00',
-            cashbackAmount: '3500.00',
-            planLabel: '36-month mutual fund backed plan',
-          },
-        ],
-      },
+      variant('256GB', 'Natural Titanium', 149900, 144900, IPHONE_NATURAL, 42),
+      variant('256GB', 'Blue Titanium', 149900, 144900, IPHONE_BLUE, 38),
+      variant('512GB', 'Natural Titanium', 169900, 164900, IPHONE_NATURAL, 31),
+      variant('512GB', 'Blue Titanium', 169900, 164900, IPHONE_BLUE, 28),
     ],
   },
   {
@@ -166,113 +146,10 @@ const seedProducts: SeedProduct[] = [
     description:
       'Flagship Galaxy experience with an S Pen, 200MP camera, and Galaxy AI features for productivity on the go.',
     variants: [
-      {
-        variantLabel: '256GB Titanium Gray',
-        color: 'Titanium Gray',
-        storage: '256GB',
-        mrp: '129999.00',
-        price: '124999.00',
-        imageUrl:
-          'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&auto=format&fit=crop',
-        availableStock: 55,
-        emiPlans: [
-          {
-            monthlyAmount: '41667.00',
-            tenureMonths: 3,
-            interestRate: '0.00',
-            planLabel: '3-month zero interest',
-          },
-          {
-            monthlyAmount: '20833.00',
-            tenureMonths: 6,
-            interestRate: '0.00',
-            cashbackAmount: '2000.00',
-            planLabel: '6-month zero interest + cashback',
-          },
-          {
-            monthlyAmount: '11120.00',
-            tenureMonths: 12,
-            interestRate: '9.00',
-            planLabel: '12-month standard EMI',
-          },
-          {
-            monthlyAmount: '10417.00',
-            tenureMonths: 12,
-            interestRate: '0.00',
-            cashbackAmount: '1200.00',
-            planLabel: '12-month zero interest promo',
-          },
-          {
-            monthlyAmount: '5950.00',
-            tenureMonths: 24,
-            interestRate: '12.50',
-            planLabel: '24-month balanced EMI',
-          },
-          {
-            monthlyAmount: '4410.00',
-            tenureMonths: 36,
-            interestRate: '14.50',
-            planLabel: '36-month extended EMI',
-          },
-        ],
-      },
-      {
-        variantLabel: '512GB Titanium Black',
-        color: 'Titanium Black',
-        storage: '512GB',
-        mrp: '144999.00',
-        price: '139999.00',
-        imageUrl:
-          'https://images.unsplash.com/photo-1610945265064-0e34e55182fa?w=800&auto=format&fit=crop',
-        availableStock: 33,
-        emiPlans: [
-          {
-            monthlyAmount: '46666.00',
-            tenureMonths: 3,
-            interestRate: '0.00',
-            planLabel: '3-month zero interest',
-          },
-          {
-            monthlyAmount: '23333.00',
-            tenureMonths: 6,
-            interestRate: '0.00',
-            cashbackAmount: '2500.00',
-            planLabel: '6-month zero interest + cashback',
-          },
-          {
-            monthlyAmount: '12450.00',
-            tenureMonths: 12,
-            interestRate: '9.00',
-            planLabel: '12-month standard EMI',
-          },
-          {
-            monthlyAmount: '11667.00',
-            tenureMonths: 12,
-            interestRate: '0.00',
-            cashbackAmount: '1800.00',
-            planLabel: '12-month zero interest promo',
-          },
-          {
-            monthlyAmount: '6660.00',
-            tenureMonths: 24,
-            interestRate: '12.50',
-            planLabel: '24-month balanced EMI',
-          },
-          {
-            monthlyAmount: '4940.00',
-            tenureMonths: 36,
-            interestRate: '14.50',
-            planLabel: '36-month extended EMI',
-          },
-          {
-            monthlyAmount: '3889.00',
-            tenureMonths: 36,
-            interestRate: '0.00',
-            cashbackAmount: '2800.00',
-            planLabel: '36-month mutual fund backed plan',
-          },
-        ],
-      },
+      variant('256GB', 'Titanium Gray', 129999, 124999, SAMSUNG_GRAY, 55),
+      variant('256GB', 'Titanium Black', 129999, 124999, SAMSUNG_BLACK, 49),
+      variant('512GB', 'Titanium Gray', 144999, 139999, SAMSUNG_GRAY, 36),
+      variant('512GB', 'Titanium Black', 144999, 139999, SAMSUNG_BLACK, 33),
     ],
   },
   {
@@ -282,113 +159,10 @@ const seedProducts: SeedProduct[] = [
     description:
       'Performance-first flagship with Snapdragon 8 Elite, 120Hz AMOLED display, and Hasselblad-tuned cameras.',
     variants: [
-      {
-        variantLabel: '256GB Midnight Ocean',
-        color: 'Midnight Ocean',
-        storage: '256GB',
-        mrp: '69999.00',
-        price: '66999.00',
-        imageUrl:
-          'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop',
-        availableStock: 64,
-        emiPlans: [
-          {
-            monthlyAmount: '22333.00',
-            tenureMonths: 3,
-            interestRate: '0.00',
-            planLabel: '3-month zero interest',
-          },
-          {
-            monthlyAmount: '11167.00',
-            tenureMonths: 6,
-            interestRate: '0.00',
-            cashbackAmount: '1000.00',
-            planLabel: '6-month zero interest + cashback',
-          },
-          {
-            monthlyAmount: '5970.00',
-            tenureMonths: 12,
-            interestRate: '8.00',
-            planLabel: '12-month standard EMI',
-          },
-          {
-            monthlyAmount: '5583.00',
-            tenureMonths: 12,
-            interestRate: '0.00',
-            cashbackAmount: '800.00',
-            planLabel: '12-month zero interest promo',
-          },
-          {
-            monthlyAmount: '3190.00',
-            tenureMonths: 24,
-            interestRate: '11.50',
-            planLabel: '24-month balanced EMI',
-          },
-          {
-            monthlyAmount: '2365.00',
-            tenureMonths: 36,
-            interestRate: '13.50',
-            planLabel: '36-month extended EMI',
-          },
-        ],
-      },
-      {
-        variantLabel: '512GB Arctic Dawn',
-        color: 'Arctic Dawn',
-        storage: '512GB',
-        mrp: '79999.00',
-        price: '76999.00',
-        imageUrl:
-          'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop',
-        availableStock: 47,
-        emiPlans: [
-          {
-            monthlyAmount: '25666.00',
-            tenureMonths: 3,
-            interestRate: '0.00',
-            planLabel: '3-month zero interest',
-          },
-          {
-            monthlyAmount: '12833.00',
-            tenureMonths: 6,
-            interestRate: '0.00',
-            cashbackAmount: '1200.00',
-            planLabel: '6-month zero interest + cashback',
-          },
-          {
-            monthlyAmount: '6860.00',
-            tenureMonths: 12,
-            interestRate: '8.00',
-            planLabel: '12-month standard EMI',
-          },
-          {
-            monthlyAmount: '6417.00',
-            tenureMonths: 12,
-            interestRate: '0.00',
-            cashbackAmount: '1000.00',
-            planLabel: '12-month zero interest promo',
-          },
-          {
-            monthlyAmount: '3665.00',
-            tenureMonths: 24,
-            interestRate: '11.50',
-            planLabel: '24-month balanced EMI',
-          },
-          {
-            monthlyAmount: '2715.00',
-            tenureMonths: 36,
-            interestRate: '13.50',
-            planLabel: '36-month extended EMI',
-          },
-          {
-            monthlyAmount: '2139.00',
-            tenureMonths: 36,
-            interestRate: '0.00',
-            cashbackAmount: '1500.00',
-            planLabel: '36-month mutual fund backed plan',
-          },
-        ],
-      },
+      variant('256GB', 'Midnight Ocean', 69999, 66999, ONEPLUS_MIDNIGHT, 64),
+      variant('256GB', 'Arctic Dawn', 69999, 66999, ONEPLUS_ARCTIC, 58),
+      variant('512GB', 'Midnight Ocean', 79999, 76999, ONEPLUS_MIDNIGHT, 51),
+      variant('512GB', 'Arctic Dawn', 79999, 76999, ONEPLUS_ARCTIC, 47),
     ],
   },
 ];
@@ -418,7 +192,7 @@ async function seed() {
     await productRepo.save(product);
 
     for (const variantData of productData.variants) {
-      const variant = variantRepo.create({
+      const row = variantRepo.create({
         productId: product.id,
         variantLabel: variantData.variantLabel,
         color: variantData.color,
@@ -428,11 +202,11 @@ async function seed() {
         imageUrl: variantData.imageUrl,
         availableStock: variantData.availableStock,
       });
-      await variantRepo.save(variant);
+      await variantRepo.save(row);
 
       for (const planData of variantData.emiPlans) {
         const emiPlan = emiPlanRepo.create({
-          variantId: variant.id,
+          variantId: row.id,
           monthlyAmount: planData.monthlyAmount,
           tenureMonths: planData.tenureMonths,
           interestRate: planData.interestRate,
@@ -467,8 +241,8 @@ async function seed() {
     FROM products p
     JOIN product_variants pv ON pv."productId" = p.id
     LEFT JOIN emi_plans ep ON ep."variantId" = pv.id
-    GROUP BY p.slug, p.name, pv."variantLabel"
-    ORDER BY p.slug, pv."variantLabel"
+    GROUP BY p.slug, p.name, pv."variantLabel", pv.storage, pv.color
+    ORDER BY p.slug, pv.storage, pv.color
   `);
 
   console.log('\nProducts with variant and EMI plan counts:');

@@ -3,13 +3,18 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 
-function corsOrigins(): string | string[] {
-  const raw = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
-  const origins = raw
+const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+];
+
+function corsOrigins(): string[] {
+  const fromEnv = (process.env.FRONTEND_ORIGIN ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  return origins.length === 1 ? origins[0] : origins;
+
+  return [...new Set([...DEFAULT_CORS_ORIGINS, ...fromEnv])];
 }
 
 async function bootstrap() {
