@@ -1,74 +1,74 @@
-# EMI Store
+# EMI Store — Mutual Fund Backed EMI Catalog (1Fi SDE-1 Assignment)
 
-Product catalog app where each product has multiple variants, and each variant has multiple EMI plans backed by mutual funds.
+Product catalog app where each product has multiple variants, and each variant has multiple EMI plans backed by mutual funds. All catalog data is loaded from PostgreSQL through the REST API — nothing is hardcoded in the UI.
 
-Monorepo layout:
+Monorepo: `backend/` (NestJS + TypeORM + PostgreSQL) and `frontend/` (React + Vite + TypeScript + Tailwind CSS).
 
-- `backend/` — NestJS API + TypeORM + PostgreSQL
-- `frontend/` — React (Vite) + TypeScript + Tailwind CSS
+## Live demo
 
-## Tech stack
+- **Frontend (Vercel):** https://emi-vault-pink.vercel.app
+- **Backend API (Render):** https://emi-vault.onrender.com
+- **Products endpoint:** https://emi-vault.onrender.com/api/products
 
-**Backend**
+---
 
-- Node.js 20+
-- NestJS 12.0.1 (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`)
-- `@nestjs/config` 12.0.0
-- `@nestjs/typeorm` 12.0.1
-- TypeORM 1.1.1
-- PostgreSQL driver `pg` 8.23.0
-- `class-validator` 0.15.1 and `class-transformer` 0.5.1
-- TypeScript 6.0.2
+## 1. Tech stack
 
 **Frontend**
 
 - React 19.2.8
 - Vite 8.2.2
 - TypeScript 6.0.2
-- Tailwind CSS 4.3.3 (`@tailwindcss/vite`)
+- Tailwind CSS 4.3.3
 - React Router DOM 7.18.3
 - Axios 1.20.0
 
-**Database**
+**Backend**
 
-- PostgreSQL 14+ (local instance)
+- Node.js 20+
+- NestJS 12 (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`)
+- `@nestjs/config` 12
+- `@nestjs/typeorm` 12
+- TypeORM 1.1.1
+- `class-validator` + `class-transformer`
+- `pg` 8.23 (PostgreSQL driver)
 
-## Setup & run
+**Database & hosting**
 
-These steps assume a reviewer with a fresh clone and a local PostgreSQL server.
+- PostgreSQL (local, or hosted via `DATABASE_URL` — Neon / Render / Supabase)
+- Frontend: Vercel
+- Backend: Render
 
-### 1. Prerequisites
+This repo does **not** use Prisma, Lucide Icons, or a `schema.prisma` file.
 
-- Node.js 20 or newer (`node -v`)
-- npm 10 or newer (`npm -v`)
-- PostgreSQL running on `localhost:5432` (or update env vars below)
+---
+
+## 2. Setup and run
+
+### Prerequisites
+
+- Node.js 20 or newer
+- npm 10 or newer
+- PostgreSQL (local) **or** a hosted Postgres URL
 - Git
 
-### 2. Clone the repository
+### Clone
 
 ```bash
-git clone <repo-url> emi-vault
+git clone https://github.com/Manjeet2684/emi-vault.git
 cd emi-vault
 ```
 
-### 3. Create the database
-
-In `psql` (or any Postgres client):
-
-```sql
-CREATE DATABASE emi_vault;
-```
-
-### 4. Backend env vars
+### Backend
 
 ```bash
 cd backend
-copy .env.example .env
+cp .env.example .env
 ```
 
-On macOS/Linux use `cp .env.example .env`.
+On Windows PowerShell: `copy .env.example .env`
 
-Edit `backend/.env`:
+Edit `backend/.env` for local Postgres:
 
 ```
 DB_HOST=localhost
@@ -76,58 +76,37 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=yourpassword
 DB_NAME=emi_vault
+FRONTEND_ORIGIN=http://localhost:5173,http://localhost:5174
 ```
 
-Optional:
-
-```
-PORT=3000
-FRONTEND_ORIGIN=http://localhost:5173
-```
-
-For a hosted database (Render Postgres, Neon, or Supabase), you can set `DATABASE_URL` instead of the individual `DB_*` fields:
+Or use a hosted database instead of the `DB_*` fields:
 
 ```
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require
 ```
 
-### 5. Install backend dependencies, create tables, and seed
+Create the database if it does not exist:
 
-The seed script uses TypeORM `synchronize: true` to create tables, then inserts catalog data. Run this **before** starting the API.
-
-```bash
-cd backend
-npm install
-npm run seed
+```sql
+CREATE DATABASE emi_vault;
 ```
 
-Expected seed result: 3 products, 6 variants, 40 EMI plans.
-
-Re-running `npm run seed` truncates existing catalog tables and inserts a fresh set.
-
-### 6. Start the backend
-
 ```bash
-cd backend
+npm install
+npm run seed
 npm run start:dev
 ```
 
-API base URL: `http://localhost:3000`
+`npm run seed` creates/syncs tables with TypeORM and inserts catalog data. The API listens on `http://localhost:3000`.
 
-Quick check:
+There is no Prisma migrate/push step.
 
-```bash
-curl http://localhost:3000/api/products
-```
-
-### 7. Frontend env vars
+### Frontend
 
 ```bash
 cd frontend
-copy .env.example .env
+cp .env.example .env
 ```
-
-On macOS/Linux use `cp .env.example .env`.
 
 `frontend/.env`:
 
@@ -135,32 +114,21 @@ On macOS/Linux use `cp .env.example .env`.
 VITE_API_URL=http://localhost:3000
 ```
 
-### 8. Install frontend dependencies and start the UI
-
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+Vite serves the UI at `http://localhost:5173` (or `5174` if 5173 is busy).
 
-The listing page loads products from `GET /api/products`. Product detail pages use `/products/:slug` (for example `/products/iphone-17-pro`).
+---
 
-## Schema
+## 3. Database schema
 
-Relationship: **Product 1 — N ProductVariant 1 — N EMIPlan**.
+TypeORM entities map to three PostgreSQL tables. Relationship: **Product 1 — N ProductVariant 1 — N EMIPlan**.
 
 ```
-products
-  1
-  |
-  N
-product_variants
-  1
-  |
-  N
-emi_plans
+products 1 ──< product_variants 1 ──< emi_plans
 ```
 
 ### `products`
@@ -168,41 +136,50 @@ emi_plans
 | Column | Type | Notes |
 |---|---|---|
 | `id` | integer, PK, serial | |
-| `slug` | varchar(150) | unique + indexed (`IDX_PRODUCTS_SLUG`), used in URLs |
+| `slug` | varchar(150) | unique + indexed, used in URLs |
 | `name` | varchar(150) | |
 | `brand` | varchar(120) | |
-| `description` | text | |
+| `description` | text | required |
 | `createdAt` | timestamptz | set automatically |
+
+There is no `startingPrice` or `updatedAt` column on `products`. Starting price is derived in the list API from the first variant's `price`.
 
 ### `product_variants`
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | integer, PK, serial | |
-| `productId` | integer, FK → `products.id` | indexed (`IDX_PRODUCT_VARIANTS_PRODUCT_ID`), `ON DELETE CASCADE` |
+| `productId` | integer, FK → `products.id` | indexed, `ON DELETE CASCADE` |
 | `variantLabel` | varchar(160) | e.g. `256GB Natural Titanium` |
 | `color` | varchar(80) | |
 | `storage` | varchar(80) | |
 | `mrp` | numeric(12,2) | |
 | `price` | numeric(12,2) | selling price |
-| `imageUrl` | text | |
+| `imageUrl` | text | path such as `/images/iphone-natural-titanium.png` |
 | `availableStock` | integer | default `0` |
+
+There is no `colorHex` column. The image field in the database and detail API is `imageUrl`, not `image`.
 
 ### `emi_plans`
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | integer, PK, serial | |
-| `variantId` | integer, FK → `product_variants.id` | indexed (`IDX_EMI_PLANS_VARIANT_ID`), `ON DELETE CASCADE` |
+| `variantId` | integer, FK → `product_variants.id` | indexed, `ON DELETE CASCADE` |
 | `monthlyAmount` | numeric(12,2) | |
-| `tenureMonths` | integer | 3 / 6 / 12 / 24 / 36 |
-| `interestRate` | numeric(5,2) | `0` means zero-interest |
+| `tenureMonths` | integer | seed uses 3 / 6 / 12 / 24 / 36 |
+| `interestRate` | numeric(5,2) | `0` means zero-interest; seed also uses 8.5 / 12 / 14 |
 | `cashbackAmount` | numeric(12,2), nullable | |
-| `planLabel` | varchar(160), nullable | optional display text |
+| `planLabel` | varchar(160), nullable | |
 
-## API endpoints
+There is no `monthlyPayment`, `isRecommended`, or `updatedAt` column.
 
-Base URL in local development: `http://localhost:3000`
+---
+
+## 4. API endpoints and example responses
+
+Base URL locally: `http://localhost:3000`  
+Live: `https://emi-vault.onrender.com`
 
 Errors return JSON:
 
@@ -215,19 +192,13 @@ Errors return JSON:
 }
 ```
 
-Typical statuses: `400` for invalid input, `404` for missing product/variant.
-
 ### `GET /api/products`
 
-Lists all products with nested variant summary fields used by the grid: id, slug, name, brand, starting price (first variant price), image, variant count.
-
-**Request**
+Lists all products. Starting price and image come from the first variant.
 
 ```bash
-curl http://localhost:3000/api/products
+curl https://emi-vault.onrender.com/api/products
 ```
-
-**Response**
 
 ```json
 [
@@ -237,8 +208,8 @@ curl http://localhost:3000/api/products
     "name": "iPhone 17 Pro",
     "brand": "Apple",
     "startingPrice": 144900,
-    "image": "https://images.unsplash.com/photo-1695048133142-1c204c0c0a0e?w=800&auto=format&fit=crop",
-    "variantCount": 2
+    "image": "/images/iphone-natural-titanium.png",
+    "variantCount": 4
   },
   {
     "id": 2,
@@ -246,8 +217,8 @@ curl http://localhost:3000/api/products
     "name": "Samsung Galaxy S24 Ultra",
     "brand": "Samsung",
     "startingPrice": 124999,
-    "image": "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&auto=format&fit=crop",
-    "variantCount": 2
+    "image": "/images/samsung-s24-titanium-gray.png",
+    "variantCount": 4
   },
   {
     "id": 3,
@@ -255,23 +226,19 @@ curl http://localhost:3000/api/products
     "name": "OnePlus 13",
     "brand": "OnePlus",
     "startingPrice": 66999,
-    "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop",
-    "variantCount": 2
+    "image": "/images/oneplus-13-midnight-ocean.png",
+    "variantCount": 4
   }
 ]
 ```
 
 ### `GET /api/products/:slug`
 
-Full product detail: product fields, all variants, and all EMI plans per variant.
-
-**Request**
+Full product: description, every variant, and every EMI plan nested under each variant.
 
 ```bash
-curl http://localhost:3000/api/products/iphone-17-pro
+curl https://emi-vault.onrender.com/api/products/iphone-17-pro
 ```
-
-**Response**
 
 ```json
 {
@@ -280,7 +247,7 @@ curl http://localhost:3000/api/products/iphone-17-pro
   "name": "iPhone 17 Pro",
   "brand": "Apple",
   "description": "Titanium design with the A19 Pro chip, ProMotion display, and an advanced triple-camera system built for low-light photography.",
-  "createdAt": "2026-09-03T16:15:33.723Z",
+  "createdAt": "2026-09-03T20:43:22.715Z",
   "variants": [
     {
       "id": 1,
@@ -289,7 +256,7 @@ curl http://localhost:3000/api/products/iphone-17-pro
       "storage": "256GB",
       "mrp": 149900,
       "price": 144900,
-      "imageUrl": "https://images.unsplash.com/photo-1695048133142-1c204c0c0a0e?w=800&auto=format&fit=crop",
+      "imageUrl": "/images/iphone-natural-titanium.png",
       "availableStock": 42,
       "emiPlans": [
         {
@@ -305,7 +272,7 @@ curl http://localhost:3000/api/products/iphone-17-pro
           "monthlyAmount": 24150,
           "tenureMonths": 6,
           "interestRate": 0,
-          "cashbackAmount": 2500,
+          "cashbackAmount": 2174,
           "planLabel": "6-month zero interest + cashback"
         }
       ]
@@ -314,49 +281,15 @@ curl http://localhost:3000/api/products/iphone-17-pro
 }
 ```
 
-The live response includes every variant and every EMI plan (truncated above).
-
-**Not found**
-
-```bash
-curl http://localhost:3000/api/products/does-not-exist
-```
-
-```json
-{
-  "statusCode": 404,
-  "message": "Product not found",
-  "timestamp": "2026-09-03T16:26:51.982Z",
-  "path": "/api/products/does-not-exist"
-}
-```
-
-**Bad slug**
-
-```bash
-curl http://localhost:3000/api/products/iphone_17
-```
-
-```json
-{
-  "statusCode": 400,
-  "message": "slug must be a valid URL slug",
-  "timestamp": "2026-09-03T16:25:40.438Z",
-  "path": "/api/products/iphone_17"
-}
-```
+The live response includes all 4 variants and 7 EMI plans per variant (truncated above).
 
 ### `GET /api/products/:slug/variants/:variantId`
 
-Single variant plus its EMI plans.
-
-**Request**
+Optional helper: one variant plus its EMI plans.
 
 ```bash
-curl http://localhost:3000/api/products/iphone-17-pro/variants/1
+curl https://emi-vault.onrender.com/api/products/iphone-17-pro/variants/1
 ```
-
-**Response**
 
 ```json
 {
@@ -366,7 +299,7 @@ curl http://localhost:3000/api/products/iphone-17-pro/variants/1
   "storage": "256GB",
   "mrp": 149900,
   "price": 144900,
-  "imageUrl": "https://images.unsplash.com/photo-1695048133142-1c204c0c0a0e?w=800&auto=format&fit=crop",
+  "imageUrl": "/images/iphone-natural-titanium.png",
   "availableStock": 42,
   "emiPlans": [
     {
@@ -376,191 +309,49 @@ curl http://localhost:3000/api/products/iphone-17-pro/variants/1
       "interestRate": 0,
       "cashbackAmount": null,
       "planLabel": "3-month zero interest"
-    },
-    {
-      "id": 2,
-      "monthlyAmount": 24150,
-      "tenureMonths": 6,
-      "interestRate": 0,
-      "cashbackAmount": 2500,
-      "planLabel": "6-month zero interest + cashback"
     }
   ]
 }
 ```
 
-**Bad variant id**
+---
 
-```bash
-curl http://localhost:3000/api/products/iphone-17-pro/variants/abc
-```
-
-```json
-{
-  "statusCode": 400,
-  "message": "variantId must not be less than 1,variantId must be an integer number",
-  "timestamp": "2026-09-03T16:25:40.210Z",
-  "path": "/api/products/iphone-17-pro/variants/abc"
-}
-```
-
-## Folder structure
+## 5. Folder structure
 
 ```
 emi-vault/
 ├── README.md
-├── .gitignore
 ├── backend/
 │   ├── .env.example
-│   ├── package.json
 │   └── src/
-│       ├── main.ts                 # CORS, validation pipe, exception filter
-│       ├── app.module.ts           # Config + TypeORM + ProductsModule
-│       ├── seed.ts                 # catalog seed (creates tables + data)
-│       ├── common/filters/         # JSON HTTP exception filter
-│       ├── entities/               # Product, ProductVariant, EMIPlan
-│       └── products/               # module, controller, service, DTOs
+│       ├── main.ts
+│       ├── seed.ts
+│       ├── entities/          # TypeORM: Product, ProductVariant, EMIPlan
+│       └── products/          # controller, service, DTOs
 └── frontend/
     ├── .env.example
-    ├── package.json
-    ├── vite.config.ts
-    ├── index.html
+    ├── vercel.json
+    ├── public/images/         # chassis photos served as /images/...
     └── src/
-        ├── App.tsx                 # routes: / and /products/:slug
-        ├── api/                    # axios client + product API calls
-        ├── components/             # ProductCard, EMI cards, modal, skeletons
-        ├── hooks/                  # document.title helper
-        ├── lib/                    # formatting + error helpers
-        ├── pages/                  # listing + detail pages
-        ├── types/                  # shared TypeScript types
-        └── public/images/          # variant chassis photos (served as /images/...)
+        ├── api/
+        ├── components/
+        └── pages/
 ```
 
 ## Scripts
 
-**Backend** (`backend/`)
+| Location | Command | Purpose |
+|---|---|---|
+| `backend/` | `npm run start:dev` | API on port 3000 |
+| `backend/` | `npm run seed` | Create tables and insert catalog data |
+| `backend/` | `npm run build` | Compile to `dist/` |
+| `backend/` | `npm run start:prod` | `node dist/main.js` |
+| `frontend/` | `npm run dev` | Vite on port 5173 |
+| `frontend/` | `npm run build` | Production build to `frontend/dist/` |
 
-| Command | Purpose |
-|---|---|
-| `npm run start:dev` | Watch mode API on port 3000 |
-| `npm run seed` | Create/sync tables and insert catalog data |
-| `npm run build` | Compile NestJS to `dist/` |
-| `npm run start:prod` | Run compiled `dist/main.js` |
-| `npm run seed:prod` | Seed using the compiled `dist/seed.js` |
+## Deployment notes
 
-**Root**
-
-| Command | Purpose |
-|---|---|
-| `npm run build` | Production build of backend then frontend |
-| `npm run build:backend` | `backend` production build |
-| `npm run build:frontend` | `frontend` production build |
-
-**Frontend** (`frontend/`)
-
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Vite dev server on port 5173 |
-| `npm run build` | Production build to `frontend/dist/` |
-| `npm run preview` | Preview the production build |
-
-## Deployment
-
-The backend is prepared for **Render**. The frontend is prepared for **Vercel**. You must complete the dashboard steps below yourself.
-
-### Production builds (local check)
-
-```bash
-cd backend
-npm run build
-npm run start:prod
-```
-
-```bash
-cd frontend
-npm run build
-npm run preview
-```
-
-Or from the repo root (after installing deps in both folders):
-
-```bash
-npm run build
-```
-
-- Backend output: `backend/dist/` — start command `npm run start:prod` (`node dist/main.js`)
-- Frontend output: `frontend/dist/` — Vite static files for Vercel
-- Frontend API base URL is baked in at **build time** from `VITE_API_URL`
-
-### Backend on Render — exact dashboard steps
-
-1. Push this repo to GitHub (or GitLab / Bitbucket).
-2. Open [https://dashboard.render.com](https://dashboard.render.com) and sign in.
-3. Create a PostgreSQL database **or** use Neon/Supabase:
-   - **Render Postgres:** New → Postgres. Copy the **Internal Database URL** (or External if the API is not on Render).
-   - **Neon:** [https://console.neon.tech](https://console.neon.tech) → create a project → copy the connection string (`postgresql://...?sslmode=require`).
-   - **Supabase:** Project Settings → Database → URI.
-4. New → **Web Service** → connect the `emi-vault` repo.
-5. Set:
-   - **Root Directory:** `backend`
-   - **Runtime:** Node
-   - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `npm run start:prod`
-6. Environment variables (Environment tab):
-
-   | Key | Value |
-   |---|---|
-   | `NODE_ENV` | `production` |
-   | `PORT` | leave unset — Render injects `PORT` automatically |
-   | `DATABASE_URL` | the Postgres connection string from step 3 |
-   | `FRONTEND_ORIGIN` | your Vercel URL, e.g. `https://emi-vault.vercel.app` (add it after the frontend is live; you can update later) |
-
-7. Create Web Service and wait for the first deploy. Copy the service URL, e.g. `https://emi-store-api.onrender.com`.
-8. Seed the hosted database **once** (Render Shell on the web service, or from your laptop):
-
-   ```bash
-   npm run seed:prod
-   ```
-
-   From your laptop, set `DATABASE_URL` to the hosted URL in `backend/.env` (do not commit it) and run:
-
-   ```bash
-   cd backend
-   npm run seed
-   ```
-
-9. Confirm: `https://YOUR-RENDER-URL/api/products` returns JSON.
-
-Render listens on `process.env.PORT` and binds `0.0.0.0`. Hosted `DATABASE_URL` enables SSL automatically.
-
-### Frontend on Vercel — exact dashboard steps
-
-1. Open [https://vercel.com](https://vercel.com) and sign in.
-2. Add New → Project → import the `emi-vault` repo.
-3. Set:
-   - **Root Directory:** `frontend` (Edit, not the repo root)
-   - **Framework Preset:** Vite
-   - **Build Command:** `npm run build` (default)
-   - **Output Directory:** `dist` (default)
-4. Environment Variables (must be set **before** the production build):
-
-   | Key | Value |
-   |---|---|
-   | `VITE_API_URL` | `https://YOUR-RENDER-URL` with **no trailing slash** |
-
-   Example: `https://emi-store-api.onrender.com`
-
-5. Deploy.
-6. Copy the Vercel URL (e.g. `https://emi-vault.vercel.app`).
-7. Go back to Render → Environment → set `FRONTEND_ORIGIN` to that Vercel URL → **Manual Deploy** → Deploy latest commit (so CORS allows the frontend).
-8. If you change `VITE_API_URL` later, redeploy the Vercel project so the new value is baked into the JS bundle.
-
-`frontend/vercel.json` rewrites SPA routes to `index.html` so `/products/:slug` works on refresh. Product photos in `frontend/public/images/` are copied into `dist/images/` at build time and served as static files.
-
-### After both are live
-
-1. Open the Vercel URL.
-2. Confirm the product grid loads from the Render API.
-3. Open a product, select a variant and EMI plan, click Proceed.
-4. Confirm chassis photos load from `/images/...` (same origin as the Vercel app).
-
+- Render start command: `npm run start:prod` (root directory `backend`). Uses `process.env.PORT` and `DATABASE_URL`.
+- Vercel root directory: `frontend`. Set `VITE_API_URL=https://emi-vault.onrender.com` at build time.
+- After a hosted deploy, seed once with `npm run seed:prod` on Render (or `npm run seed` locally against `DATABASE_URL`).
+- Product images live in `frontend/public/images/` and are served by Vercel at `/images/...`.
